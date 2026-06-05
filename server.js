@@ -66,8 +66,14 @@ app.post("/admin/add", (req, res) => {
   `);
 });
 
+
 app.post("/news", (req, res) => {
-  res.redirect(307, "/news/0");
+  res.type("text/xml");
+  res.send(`
+    <Response>
+      <Redirect method="POST">/news/0</Redirect>
+    </Response>
+  `);
 });
 
 app.post("/news/:index", (req, res) => {
@@ -118,7 +124,8 @@ app.post("/news/:index", (req, res) => {
 
   const nextIndex = index + 1;
 
-  let twiml = `
+  res.type("text/xml");
+  res.send(`
     <Response>
       <Gather input="dtmf" numDigits="1" action="/news/${nextIndex}" method="POST" timeout="1">
         <Say voice="alice">Ding.</Say>
@@ -128,11 +135,9 @@ app.post("/news/:index", (req, res) => {
 
       <Redirect method="POST">/news/${nextIndex}</Redirect>
     </Response>
-  `;
-
-  res.type("text/xml");
-  res.send(twiml);
+  `);
 });
+
 app.post("/sms", (req, res) => {
   const text = req.body.Body || "";
 
