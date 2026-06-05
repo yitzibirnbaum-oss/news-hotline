@@ -10,6 +10,17 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+
+async function setupDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bulletins (
+      id SERIAL PRIMARY KEY,
+      text TEXT NOT NULL,
+      uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
 app.use(express.urlencoded({ extended: false }));
 
 const SECRET_CODE = "1234";
@@ -171,6 +182,13 @@ app.post("/sms", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("News Hotline running on port " + PORT);
-});
+setupDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("News Hotline running on port " + PORT);
+    });
+  })
+  .catch((err) => {
+    console.error("Database setup failed:", err);
+    process.exit(1);
+  });
