@@ -87,15 +87,22 @@ app.post("/news", (req, res) => {
     twiml += `<Say voice="alice">Ding.</Say>`;
 
     if (uploadedAt) {
-      const timeText = new Date(uploadedAt).toLocaleString("en-US", {
-        timeZone: "America/New_York",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      });
+      const date = new Date(uploadedAt);
 
-      twiml += `<Say voice="alice">Posted ${clean(timeText)}.</Say>`;
+const weekday = date.toLocaleDateString("en-US", {
+  timeZone: "America/New_York",
+  weekday: "long"
+});
+
+const time = date.toLocaleTimeString("en-US", {
+  timeZone: "America/New_York",
+  hour: "numeric",
+  minute: "2-digit"
+});
+
+const timeText = `${weekday} ${time}`;
+
+      twiml += `<Say voice="alice">${clean(timeText)}.</Say>`;
     }
 
     twiml += `<Say voice="alice">${clean(text)}</Say>`;
