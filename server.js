@@ -74,8 +74,11 @@ uploadedAt: new Date().toISOString()
 
 saveBulletins(bulletins);
 
-res.send( <h1>Bulletin Added</h1> <p>${bulletin}</p> <a href="/admin">Add Another</a> );
-});
+res.send(`
+  <h1>Bulletin Added</h1>
+  <p>${bulletin}</p>
+  <a href="/admin">Add Another</a>
+`);
 
 app.post("/news", (req, res) => {
 const bulletins = getBulletins();
