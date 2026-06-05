@@ -25,12 +25,22 @@ app.use(express.urlencoded({ extended: false }));
 
 const SECRET_CODE = "1234";
 
-function getBulletins() {
-  return JSON.parse(fs.readFileSync("bulletins.json", "utf8"));
+async function getBulletins() {
+  const result = await pool.query(
+    "SELECT text, uploaded_at FROM bulletins ORDER BY uploaded_at DESC"
+  );
+
+  return result.rows.map((row) => ({
+    text: row.text,
+    uploadedAt: row.uploaded_at
+  }));
 }
 
-function saveBulletins(bulletins) {
-  fs.writeFileSync("bulletins.json", JSON.stringify(bulletins, null, 2));
+async function saveBulletin(text) {
+  await pool.query(
+    "INSERT INTO bulletins (text) VALUES ($1)",
+    [text]
+  );
 }
 
 app.get("/", (req, res) => {
@@ -57,7 +67,7 @@ app.get("/admin", (req, res) => {
   `);
 });
 
-app.post("/admin/add", (req, res) => {
+app.post("/admin/add", async (req, res) => {
   const code = req.body.code || "";
   const bulletin = req.body.bulletin || "";
 
@@ -69,14 +79,7 @@ app.post("/admin/add", (req, res) => {
     return res.send("Bulletin cannot be empty.");
   }
 
-  const bulletins = getBulletins();
-
-  bulletins.unshift({
-    text: bulletin.trim(),
-    uploadedAt: new Date().toISOString()
-  });
-
-  saveBulletins(bulletins);
+ await saveBulletin(bulletin.trim());
 
   res.send(`
     <h1>Bulletin Added</h1>
@@ -95,8 +98,8 @@ app.post("/news", (req, res) => {
   `);
 });
 
-app.post("/news/:index", (req, res) => {
-  const bulletins = getBulletins();
+app.post("/news/:index", async (req, res) => {
+  const bulletins = await getBulletins();
   const index = Number(req.params.index);
 
   function clean(text) {
@@ -157,7 +160,7 @@ app.post("/news/:index", (req, res) => {
   `);
 });
 
-app.post("/sms", (req, res) => {
+app.post("/sms", async (req, res) => {
   const text = req.body.Body || "";
 
   if (!text.startsWith("ADD " + SECRET_CODE + " ")) {
@@ -167,14 +170,7 @@ app.post("/sms", (req, res) => {
 
   const bulletin = text.replace("ADD " + SECRET_CODE + " ", "").trim();
 
-  const bulletins = getBulletins();
-
-  bulletins.unshift({
-    text: bulletin,
-    uploadedAt: new Date().toISOString()
-  });
-
-  saveBulletins(bulletins);
+  await saveBulletin(bulletin);
 
   res.type("text/xml");
   res.send("<Response><Message>Bulletin added.</Message></Response>");
