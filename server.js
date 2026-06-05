@@ -69,15 +69,22 @@ app.post("/admin/add", (req, res) => {
 app.post("/news", (req, res) => {
   const bulletins = getBulletins();
 
+  function clean(text) {
+    return String(text || "")
+      .replace(/&/g, "and")
+      .replace(/</g, "")
+      .replace(/>/g, "")
+      .replace(/"/g, "")
+      .replace(/'/g, "");
+  }
+
   let twiml = "<Response>";
 
   bulletins.forEach((item) => {
     const text = typeof item === "string" ? item : item.text;
     const uploadedAt = typeof item === "string" ? null : item.uploadedAt;
 
-    twiml += `
-      <Play>https://actions.google.com/sounds/v1/alarms/beep_short.ogg</Play>
-    `;
+    twiml += `<Say voice="alice">Ding.</Say>`;
 
     if (uploadedAt) {
       const timeText = new Date(uploadedAt).toLocaleString("en-US", {
@@ -88,15 +95,11 @@ app.post("/news", (req, res) => {
         minute: "2-digit"
       });
 
-      twiml += `
-        <Say voice="alice">Posted ${timeText}</Say>
-      `;
+      twiml += `<Say voice="alice">Posted ${clean(timeText)}.</Say>`;
     }
 
-    twiml += `
-      <Say voice="alice">${text}</Say>
-      <Pause length="1"/>
-    `;
+    twiml += `<Say voice="alice">${clean(text)}</Say>`;
+    twiml += `<Pause length="1"/>`;
   });
 
   twiml += "</Response>";
