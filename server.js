@@ -67,7 +67,12 @@ app.post("/admin/add", (req, res) => {
 });
 
 app.post("/news", (req, res) => {
+  res.redirect(307, "/news/0");
+});
+
+app.post("/news/:index", (req, res) => {
   const bulletins = getBulletins();
+  const index = Number(req.params.index);
 
   function clean(text) {
     return String(text || "")
@@ -78,43 +83,56 @@ app.post("/news", (req, res) => {
       .replace(/'/g, "");
   }
 
-  let twiml = "<Response>";
+  if (index >= bulletins.length) {
+    res.type("text/xml");
+    return res.send(`
+      <Response>
+        <Say voice="alice">End of news. Goodbye.</Say>
+        <Hangup/>
+      </Response>
+    `);
+  }
 
-  bulletins.forEach((item) => {
-    const text = typeof item === "string" ? item : item.text;
-    const uploadedAt = typeof item === "string" ? null : item.uploadedAt;
+  const item = bulletins[index];
+  const text = typeof item === "string" ? item : item.text;
+  const uploadedAt = typeof item === "string" ? null : item.uploadedAt;
 
-    twiml += `<Say voice="alice">Ding.</Say>`;
+  let timeText = "";
 
-    if (uploadedAt) {
-      const date = new Date(uploadedAt);
+  if (uploadedAt) {
+    const date = new Date(uploadedAt);
 
-const weekday = date.toLocaleDateString("en-US", {
-  timeZone: "America/New_York",
-  weekday: "long"
-});
+    const weekday = date.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "long"
+    });
 
-const time = date.toLocaleTimeString("en-US", {
-  timeZone: "America/New_York",
-  hour: "numeric",
-  minute: "2-digit"
-});
+    const time = date.toLocaleTimeString("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit"
+    });
 
-const timeText = `${weekday} ${time}`;
+    timeText = `${weekday} ${time}`;
+  }
 
-      twiml += `<Say voice="alice">${clean(timeText)}.</Say>`;
-    }
+  const nextIndex = index + 1;
 
-    twiml += `<Say voice="alice">${clean(text)}</Say>`;
-    twiml += `<Pause length="1"/>`;
-  });
+  let twiml = `
+    <Response>
+      <Gather input="dtmf" numDigits="1" action="/news/${nextIndex}" method="POST" timeout="1">
+        <Say voice="alice">Ding.</Say>
+        ${timeText ? `<Say voice="alice">${clean(timeText)}.</Say>` : ""}
+        <Say voice="alice">${clean(text)}</Say>
+      </Gather>
 
-  twiml += "</Response>";
+      <Redirect method="POST">/news/${nextIndex}</Redirect>
+    </Response>
+  `;
 
   res.type("text/xml");
   res.send(twiml);
 });
-
 app.post("/sms", (req, res) => {
   const text = req.body.Body || "";
 
