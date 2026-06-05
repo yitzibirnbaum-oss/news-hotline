@@ -1,5 +1,10 @@
 [
-  "This is a test bulletin from GitHub.",
-  "Second bulletin.",
-  "Third bulletin."
+{
+"text": "Congress is debating a new spending bill today.",
+"uploadedAt": "2026-06-05T12:00:00Z"
+},
+{
+"text": "The stock market closed higher after inflation data was released.",
+"uploadedAt": "2026-06-05T11:00:00Z"
+}
 ]
