@@ -1,7 +1,15 @@
 const express = require("express");
 const fs = require("fs");
+const { Pool } = require("pg");
 
 const app = express();
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 app.use(express.urlencoded({ extended: false }));
 
 const SECRET_CODE = "1234";
